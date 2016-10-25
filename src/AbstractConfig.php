@@ -7,7 +7,8 @@ use Sojf\Config\Exceptions\ConfigException;
 abstract class AbstractConfig
 {
     public $data = array();
-    
+    public $prepend = array();
+
     abstract public function load($config);
 
     abstract public function save($path, $data);
@@ -30,8 +31,12 @@ abstract class AbstractConfig
         }
     }
 
-    public function get($key, $default = false)
+    public function get($key, $default = null)
     {
+        if (isset($this->prepend[$key])) {
+            return $this->prepend[$key];
+        }
+
         $this->keyType($key);
 
         if (isset($this->data[$key])) {
@@ -47,10 +52,18 @@ abstract class AbstractConfig
 
             $key = explode('.', $key);
 
-            return $this->dotGet($this->data, $key) ?: $default;
+            if ($ret = $this->dotGet($this->data, $key)) {
+                return $ret;
+            }
         }
-        
-        return $default;
+
+        if (is_callable($default)) {
+
+            return call_user_func($default);
+        } else {
+
+            return $default;
+        }
     }
 
     protected function dotSet(&$player, $key, $value, $prev = 0)
@@ -79,8 +92,9 @@ abstract class AbstractConfig
         }
     }
 
-    public function set($key, $value)
+    public function set($key, $value, $prepend = false)
     {
+        $k = $key;
         $this->keyType($key);
 
         $pre = mb_strpos($key, '.');
@@ -98,8 +112,12 @@ abstract class AbstractConfig
 
             $this->dotSet($this->data[$key[0]], $key, $value);
         } else {
-            
+
             $this->data[$key] = $value;
+        }
+
+        if ($prepend) {
+            $this->prepend[$k] = $value . $prepend;
         }
 
         return $this;
@@ -114,7 +132,7 @@ abstract class AbstractConfig
 
                 return $this->dotDel($player[$key[$curr]], $key, $next);
             } else {
-                
+
                 unset($player[$key[$curr]]);
                 return '';
             }
@@ -127,12 +145,12 @@ abstract class AbstractConfig
     public function del($key)
     {
         $this->keyType($key);
-        
+
         if (isset($this->data[$key])) {
 
             unset($this->data[$key]);
         } else {
-            
+
             $pre = mb_strpos($key, '.');
             $post = mb_strrpos($key, '.');
             $end = mb_strlen($key) - 1;
