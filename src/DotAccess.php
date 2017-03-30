@@ -84,7 +84,6 @@ class DotAccess
      * 使用`.`方式设置数据
      * @param $key
      * @param $value
-     * @return $this
      */
     public function set($key, $value)
     {
@@ -116,8 +115,6 @@ class DotAccess
             // 没有 . 直接设置
             $this->data[$key] = $value;
         }
-
-        return $this;
     }
 
     /**

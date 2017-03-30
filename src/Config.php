@@ -52,7 +52,7 @@ class Config extends DotAccess implements \IteratorAggregate, \ArrayAccess, Conf
     {
         // 设置缓存器
         if ($cache) {
-            $this->cache = new $cache();
+            $this->cache = $cache;
         }
 
         // 加载配置文件
